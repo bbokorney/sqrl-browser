@@ -13,17 +13,25 @@ function requestKeyName() {
 	});
 }
 
-function sendNewKey(key) {
-	var data = {"action": "newkey", "key": key};
+function sendNewKey(keyname, keytext) {
+	var data = {"action": "newkey", "keyname": keyname, "keytext": keytext};
 	sendMessage(data, function(response){
 		setKeyName(response.keyname);
 	});
 }
 
 function fileChangedHandler(event) {
-	var file = event.target.files;
-	console.log(event.target);
-	console.log(file[0].name);
+	var file = event.target.files[0];
+	console.log(file);
+	// read this file into a string
+	var reader = new FileReader();
+	reader.onload = (function(file) {
+		return function(e) {
+			// send it to the background
+			sendNewKey(file.name, e.target.result);
+		};
+	})(file);
+	reader.readAsText(file);
 }
 
 window.onload = function() {
