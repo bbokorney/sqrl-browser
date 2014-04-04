@@ -2,20 +2,6 @@ function qrCodeRightClick(info, tab) {
     qrcode.decode(info.srcUrl);
 }
 
-var context = "image";
-var title = "SQRL";
-chrome.contextMenus.create({"title": title,
-							"contexts":[context],
-							"onclick": qrCodeRightClick});
-
-
-qrcode.callback = function(data) {
-	console.log(JSON.stringify(data));
-	url = data.url;
-	// sign this
-	// send a request
-};
-
 function storeValue(key, value) {
 	localStorage[key] = value;
 }
@@ -55,3 +41,24 @@ chrome.runtime.onMessage.addListener(
 	}
 );
 
+var context = "image";
+var title = "SQRL";
+chrome.contextMenus.create({"title": title,
+							"contexts":[context],
+							"onclick": qrCodeRightClick});
+
+
+qrcode.callback = function(data) {
+	url = data;
+	// sign this
+	// get the RSA key
+	var keytext = getKeyText();
+	if(keytext == "") {
+		return;
+	}
+	var key = new RSAKey();
+	key.readPrivateKeyFromPEMString(keytext);
+	var base64 = hex2b64(key.signString(url, "sha256"));
+	console.log(base64);
+	// send a request
+};
