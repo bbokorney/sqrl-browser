@@ -1,53 +1,52 @@
-function qrCodeRightClick(info, tab) {
+function storeObject(key, object) {
+	localStorage[key] = JSON.stringify(object);
+}
+
+function getObject(key) {
+	return JSON.parse(localStorage[key]);
+}
+
+function setKeyPair(keypair) {
+	return storeObject("keypair", keypair);
+}
+
+function getKeyPair() {
+	return getObject("keypair");
+}
+
+function keyPairIsSet() {
+	return !(getKeyPair == undefined);
+}
+
+function qrCodeRightClickHandler(info, tab) {
+    if(!keyPairIsSet()) {
+    	return;
+    }
     qrcode.decode(info.srcUrl);
 }
 
-function storeValue(key, value) {
-	localStorage[key] = value;
-}
-
-function getValue(key) {
-	return localStorage[key];
-}
-
-function setKeyName(name) {
-	storeValue("keyname", name);
-}
-
-function getKeyName() {
-	return getValue("keyname");
-}
-
-function setKeyText(keytext) {
-	storeValue("keytext", keytext);
-}
-
-function getKeyText() {
-	return getValue("keytext");
-}
-
+// handle communication from the popup
 chrome.runtime.onMessage.addListener(
 	function(request, send, response) {
-		if(request.action == "newkey") {
+		if(request.action == "newkeypair") {
 			// store a new key
-			setKeyName(request.keyname);
-			setKeyText(request.keytext);
-			response({"keyname": request.keyname});
+			response();
+			setKeyPair(request.keypair);
 		}
-		else if(request.action == "keyname") {
+		else if(request.action == "keypairinfo") {	
 			// send the current key name back to the popup
-			response({"keyname": getKeyName()});
+			response({"keyset": keyPairIsSet(), "privkey": getKeyPair().private.name, "pubkey": getKeyPair().public.name});
 		}
 	}
 );
 
-var context = "image";
-var title = "SQRL";
-chrome.contextMenus.create({"title": title,
-							"contexts":[context],
-							"onclick": qrCodeRightClick});
+// register into the context menus of images
+chrome.contextMenus.create({"title": "SQRL",
+							"contexts":["image"],
+							"onclick": qrCodeRightClickHandler});
 
 
+// define what happens when a qrcode is finished decoding
 qrcode.callback = function(data) {
 	url = data;
 	// sign this
@@ -59,6 +58,6 @@ qrcode.callback = function(data) {
 	var key = new RSAKey();
 	key.readPrivateKeyFromPEMString(keytext);
 	var base64 = hex2b64(key.signString(url, "sha256"));
-	console.log(base64);
 	// send a request
+
 };

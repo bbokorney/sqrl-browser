@@ -8,12 +8,15 @@
 			text-align: center;
 		}
 		</style>
+		<script language="JavaScript" type="text/javascript" src="model.js"></script>
 		<script type="text/javascript" src="popup.js"></script>
 	</head>
 	<body>
 		<h1>SQRL</h1>
-		<p id="keyName"></p>
+		<p id="keyname"></p>
 		<p>Upload a new RSA key:</p>
-		<input type="file" id="keyFileInput"/>
+		<p><span>Private Key:</span><input type="file" id="privKeyFileInput"/></p>
+		<p><span>Public Key:</span><input type="file" id="pubKeyFileInput"/></p>
+		<p><button id="upload">Upload</button></p>
 	</body>
 </html>
