@@ -1,3 +1,5 @@
+var STATUS_TEXT = "Normal";
+
 function storeObject(key, object) {
 	localStorage[key] = JSON.stringify(object);
 }
@@ -18,11 +20,20 @@ function keyPairIsSet() {
 	return !(getKeyPair == undefined);
 }
 
-function qrCodeRightClickHandler(info, tab) {
-    if(!keyPairIsSet()) {
-    	return;
-    }
-    qrcode.decode(info.srcUrl);
+function setStatus(color, message) {
+	chrome.browserAction.setIcon({path: "icon128-"+color+".png"});
+	STATUS_TEXT = message;
+}
+
+function qrCodeRightClickHandler(setStatus, STATUS_TEXT) {
+    return function(info, tab) {
+	    if(!keyPairIsSet()) {
+	    	setStatus("red", "No key set.");
+	    	return;
+	    }
+		setStatus("yellow", "Authenticating...");
+	    qrcode.decode(info.srcUrl);
+	};
 }
 
 // handle communication from the popup
@@ -43,16 +54,13 @@ chrome.runtime.onMessage.addListener(
 // register into the context menus of images
 chrome.contextMenus.create({"title": "SQRL",
 							"contexts":["image"],
-							"onclick": qrCodeRightClickHandler});
+							"onclick": qrCodeRightClickHandler(setStatus, STATUS_TEXT)});
 
 // define what happens when a qrcode is finished decoding
 qrcode.callback = function(data) {
 	url = data;
 	// sign this
 	// get the RSA key
-	if(!keyPairIsSet()) {
-		return;
-	}
 	var privkeytext = getKeyPair().private.text;
 	var pubkeytext = getKeyPair().public.text.trim().replace(/\r\n/g, "\n");
 	var key = new RSAKey();
@@ -64,10 +72,10 @@ qrcode.callback = function(data) {
 		if(request.readyState === 4) {
 			var response = JSON.parse(request.responseText);
 			if(response.success) {
-				console.log("Logged in!");
+				setStatus("green", "Login successful.");
 			}
 			else {
-				console.log("Login failed.");
+				setStatus("red", "Login failed.");
 			}
 		}
 	};
