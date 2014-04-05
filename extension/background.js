@@ -45,19 +45,33 @@ chrome.contextMenus.create({"title": "SQRL",
 							"contexts":["image"],
 							"onclick": qrCodeRightClickHandler});
 
-
 // define what happens when a qrcode is finished decoding
 qrcode.callback = function(data) {
 	url = data;
 	// sign this
 	// get the RSA key
-	var keytext = getKeyText();
-	if(keytext == "") {
+	if(!keyPairIsSet()) {
 		return;
 	}
+	var privkeytext = getKeyPair().private.text;
+	var pubkeytext = getKeyPair().public.text.trim().replace(/\r\n/g, "\n");
 	var key = new RSAKey();
-	key.readPrivateKeyFromPEMString(keytext);
-	var base64 = hex2b64(key.signString(url, "sha256"));
+	key.readPrivateKeyFromPEMString(privkeytext);
+	var sig = hex2b64(key.signString(url, "sha256"));
 	// send a request
-
+	var request = new XMLHttpRequest();
+	request.onreadystatechange = function() {
+		if(request.readyState === 4) {
+			var response = JSON.parse(request.responseText);
+			if(response.success) {
+				console.log("Logged in!");
+			}
+			else {
+				console.log("Login failed.");
+			}
+		}
+	};
+	request.open("POST", url);
+	request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+	request.send("idk="+encodeURIComponent(btoa(pubkeytext))+"&sig="+ encodeURIComponent(sig));
 };

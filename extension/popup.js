@@ -50,9 +50,9 @@ function uploadFileHandler(event) {
 	var pubFileReader = new FileReader();
 	
 	privFileReader.onload = sendKeyPairIfReady(privKeyFile.name, pubKeyFile.name, pubFileReader, true);
-	privFileReader.readAsText(privKeyFile);
+	privFileReader.readAsText(privKeyFile, "ASCII");
 	pubFileReader.onload = sendKeyPairIfReady(pubKeyFile.name, privKeyFile.name, privFileReader, false);
-	pubFileReader.readAsText(pubKeyFile);
+	pubFileReader.readAsText(pubKeyFile, "ASCII");
 }
 
 window.onload = function() {
